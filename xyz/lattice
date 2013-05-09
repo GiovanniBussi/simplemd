@@ -1,0 +1,23 @@
+# a simple utility to generate input.xyz file
+# ./lattice 3 1.5 > input.xyz
+# generate a 3x3x3 lattice, with unitary-cell side equal to 1.5
+# the default side corresponds to the triple point
+
+awk -v n=$1 -v a0=$2 'BEGIN{
+  if(a0=="") a0=1.6796
+  if(n=="") n=1
+  l=n*a0
+  print n*n*n*4
+  print l,l,l
+  for(i=0;i<n;i++) {
+  for(j=0;j<n;j++) {
+  for(k=0;k<n;k++) {
+    print "Ar",i*a0,j*a0,k*a0
+    print "Ar",(i+0.5)*a0,j*a0,(k+0.5)*a0
+    print "Ar",(i+0.5)*a0,(j+0.5)*a0,k*a0
+    print "Ar",i*a0,(j+0.5)*a0,(k+0.5)*a0
+  }
+  }
+  }
+}'
+
