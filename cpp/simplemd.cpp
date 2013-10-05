@@ -106,6 +106,11 @@ read_input(FILE*   fp,
       sscanf(line.c_str(),"%s %d %s",buffer,&nstat,buffer1);
       statfile=buffer1;
     }
+    else if(keyword=="wrapatoms")
+    {
+      sscanf(line.c_str(),"%s %s",buffer,buffer1);
+      if(buffer1[0]=='T' || buffer1[0]=='t') wrapatoms=true;
+    }
     else if(keyword=="maxneighbours")
       sscanf(line.c_str(),"%s %d",buffer,&maxneighbours);
     else if(keyword=="inputfile")
