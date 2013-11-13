@@ -1,4 +1,4 @@
-inputfile liquid.xyz
+inputfile crystal.xyz
 outputfile output.xyz
 temperature 0.722
 tstep 0.005
