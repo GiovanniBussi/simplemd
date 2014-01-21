@@ -1,4 +1,8 @@
 All the source code included in this package is meant to be covered
 under the GNU GENERAL PUBLIC LICENSE (see ./COPYING.LESSER).
 
-The author of this software is Giovanni Bussi
+The author and maintainer of this software is Giovanni Bussi.
+
+ACKNOWLEDGEMENTS
+
+Alessandro Laio is acknowledged for helping in testing the original Fortran version of this code.
