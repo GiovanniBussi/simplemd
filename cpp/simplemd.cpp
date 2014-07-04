@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cmath>
 #include <vector>
+#include <cstdlib>
 
 using namespace std;
 using namespace PLMD;
