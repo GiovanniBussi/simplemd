@@ -1,0 +1,4 @@
+#!/bin/bash
+
+g++ -O *.cpp -o simplemd.x
+
