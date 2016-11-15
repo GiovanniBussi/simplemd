@@ -1,6 +1,7 @@
 #include "Vector.h"
 #include "Random.h"
 #include <string>
+#include <cstring>
 #include <cstdio>
 #include <cmath>
 #include <vector>
@@ -83,7 +84,7 @@ read_input(FILE*   fp,
       if(line[i]!=' ')break;
       line.erase(i);
     }
-    buffer[0]=NULL;
+    buffer[0]=0;
     sscanf(line.c_str(),"%s",buffer);
     if(strlen(buffer)==0) continue;
     string keyword=buffer;
