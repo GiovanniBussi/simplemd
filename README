@@ -11,5 +11,5 @@ TREE
 src/ source code along with a README file documenting input options
 xyz/ sample input files
 cpp/ c++ version of the code. this is the same code included in plumed2
-python/ python version of the code.
+python/ python version of the code (STILL UNDER DEVELOPMENT)
 
