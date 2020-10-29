@@ -119,8 +119,8 @@ def _compute_forces(cell, positions, forcecutoff, neighbors, point, forces):
             distancey=positions[i,1]-positions[ja,1]
             distancez=positions[i,2]-positions[ja,2]
             distancex-=np.floor(distancex/cell[0]+0.5)*cell[0]
-            distancey-=np.floor(distancey/cell[0]+0.5)*cell[1]
-            distancez-=np.floor(distancez/cell[0]+0.5)*cell[2]
+            distancey-=np.floor(distancey/cell[1]+0.5)*cell[1]
+            distancez-=np.floor(distancez/cell[2]+0.5)*cell[2]
             distance2=distancex**2+distancey**2+distancez**2
             if distance2 <= forcecutoff2:
                 invdistance2=1.0/distance2
@@ -150,8 +150,8 @@ def _compute_list(cell,positions,listcutoff,nlist,point):
             distancey=positions[i,1]-positions[j,1]
             distancez=positions[i,2]-positions[j,2]
             distancex-=np.floor(distancex/cell[0]+0.5)*cell[0]
-            distancey-=np.floor(distancey/cell[0]+0.5)*cell[1]
-            distancez-=np.floor(distancez/cell[0]+0.5)*cell[2]
+            distancey-=np.floor(distancey/cell[1]+0.5)*cell[1]
+            distancez-=np.floor(distancez/cell[2]+0.5)*cell[2]
             distance2=distancex**2+distancey**2+distancez**2
             if distance2 <= listcutoff2:
                 if point[i+1]>=len(nlist):
