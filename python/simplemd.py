@@ -290,7 +290,7 @@ class SimpleMD:
             print("%d" % len(positions), file=f)
             print("%f %f %f" % (cell[0], cell[1], cell[2]), file=f)
             if wrapatoms:
-                positions = pbc(cell,positions)
+                positions = self.pbc(cell,positions)
             np.savetxt(f,positions,fmt="Ar %10.7f %10.7f %10.7f")
 
     def write_statistics(self,istep,tstep,natoms,engkin,engconf,engint):
