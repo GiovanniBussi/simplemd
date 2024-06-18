@@ -17,7 +17,7 @@ _EPS=3.0e-16
 _AM=1.0/_IM
 _RNMX=(1.0-_EPS)
 
-@numba.jit(cache=True,fastmath=True)
+@numba.njit(cache=True,fastmath=True)
 def _U01(idum,iy,iv):
     if idum <= 0 or iy == 0:
         if (-idum < 1):
@@ -44,13 +44,13 @@ def _U01(idum,iy,iv):
         temp = _RNMX
     return idum,iy,temp
 
-@numba.jit(cache=True,fastmath=True)
+@numba.njit(cache=True,fastmath=True)
 def _U01_loop(idum,iy,iv,numbers):
     for i in range(len(numbers)):
         idum,iy,numbers[i] = _U01(idum,iy,iv)
     return idum,iy
 
-@numba.jit(cache=True,fastmath=True)
+@numba.njit(cache=True,fastmath=True)
 def _Gaussian(idum,iy,iv,switchGaussian,saveGaussian):
     if(switchGaussian):
         return idum,iy,False,0.0,saveGaussian
@@ -66,7 +66,7 @@ def _Gaussian(idum,iy,iv,switchGaussian,saveGaussian):
         fac=np.sqrt(-2.0*np.log(rsq)/rsq)
         return idum,iy,True,v1*fac,v2*fac
 
-@numba.jit(cache=True,fastmath=True)
+@numba.njit(cache=True,fastmath=True)
 def _Gaussian_loop(idum,iy,iv,switchGaussian,saveGaussian,numbers):
     for i in range(len(numbers)):
         idum,iy,switchGaussian,saveGaussian,numbers[i] = _Gaussian(
@@ -105,7 +105,7 @@ class Random():
             return numbers.reshape(shape)
 
 
-@numba.jit(cache=True,fastmath=True)
+@numba.njit(cache=True,fastmath=True)
 def _compute_forces(cell, positions, forcecutoff, neighbors, point, forces):
     engconf=0.0
     forces.fill(0.0)
@@ -139,7 +139,7 @@ def _compute_forces(cell, positions, forcecutoff, neighbors, point, forces):
                 forces[ja,2]-=fz
     return engconf
 
-@numba.jit(cache=True,fastmath=True)
+@numba.njit(cache=True,fastmath=True)
 def _compute_list(cell,positions,listcutoff,nlist,point):
    listcutoff2=listcutoff**2
    point[0]=0
