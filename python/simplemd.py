@@ -4,6 +4,12 @@ import numba
 import tempfile
 import sys
 
+try:
+    from tqdm import tqdm
+except ModuleNotFoundError:
+    def tqdm(a):
+        return a
+
 # Random number generator compatible with C++ and FORTRAN versions
 
 _IA=16807
@@ -400,7 +406,7 @@ class SimpleMD:
         #   thermostat
         #   (eventually dump output informations)
 
-        for istep in range(self.nstep):
+        for istep in tqdm(range(self.nstep)):
             if self.friction>0:
                 velocities,engint = self.thermostat(
                         masses,0.5*self.tstep,self.friction,self.temperature,velocities,engint,random)
