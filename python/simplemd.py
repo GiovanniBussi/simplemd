@@ -1,7 +1,6 @@
 import numpy as np
 import re
 import numba
-import time
 import tempfile
 import sys
 
@@ -347,7 +346,6 @@ class SimpleMD:
         #   thermostat
         #   (eventually dump output informations)
 
-        now=time.time()
         for istep in range(self.nstep):
             if self.friction>0:
                 velocities,engint = self.thermostat(
@@ -381,8 +379,6 @@ class SimpleMD:
 
         if self.write_statistics_fp is not None:
             self.write_statistics_fp.close()
-
-        print(time.time()-now)
 
 if __name__ == "__main__":
     # read from stdin and store on a temporary file
