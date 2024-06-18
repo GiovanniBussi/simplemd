@@ -174,8 +174,80 @@ def generate_lattice(n=1, a0=1.6796):
                coord[l]=(i,j+0.5,k+0.5)
                l+=1
     return ((n*a0,n*a0,n*a0),coord*a0)
+
+def read_input(file):
+    keys={}
+    with open(file,"r") as f:
+        for line in f:
+            line=re.sub("#.*$","",line)
+            line=re.sub(" *$","",line)
+            words=line.split()
+            if len(words)==0:
+                continue
+            key=words[0]
+            if key=="temperature":
+                keys["temperature"]=float(words[1])
+            elif key=="tstep":
+                keys["tstep"]=float(words[1])
+            elif key=="friction":
+                keys["friction"]=float(words[1])
+            elif key=="forcecutoff":
+                keys["forcecutoff"]=float(words[1])
+            elif key=="listcutoff":
+                keys["listcutoff"]=float(words[1])
+            elif key=="nstep":
+                keys["nstep"]=int(words[1])
+            elif key=="nconfig":
+                keys["nconfig"]=int(words[1])
+                keys["trajfile"]=words[2]
+            elif key=="nstat":
+                keys["nstat"]=int(words[1])
+                keys["statfile"]=words[2]
+            elif key=="wrapatoms":
+                if re.match("[Tt].*",words[1]):
+                    keys["wrapatoms"]=True
+            elif key=="maxneighbours":
+                keys["maxneighbors"]=int(words[1])
+            elif key=="inputfile":
+                keys["inputfile"]=words[1]
+            elif key=="outputfile":
+                keys["outputfile"]=words[1]
+            elif key=="idum":
+                keys["idum"]=int(words[1])
+            else:
+                raise Exception("Unknown keyword: "+key)
+    return keys
+
+def read_positions(file):
+    with open(file,"r") as f:
+        natoms=int(f.readline())
+        cell=[float(x) for x in f.readline().split()]
+        positions=np.loadtxt(f,usecols=(1,2,3))
+    assert(len(positions)==natoms)
+    return np.array(cell),np.array(positions)
+
+
 class SimpleMD:
-    def __init__(self):
+    def __init__(self,*,
+                temperature=1.0,
+                maxneighbors=5000,
+                tstep=0.005,
+                friction=0.0,
+                forcecutoff=2.5,
+                listcutoff=3.0,
+                nstep=1,
+                nconfig=10,
+                nstat=1,
+                idum=0,
+                wrapatoms=False,
+                statfile=None,
+                inputfile=None,
+                outputfile=None,
+                trajfile=None,
+                cell=None,
+                positions=None):
+
+
         self.iv=np.zeros(32,dtype=int)
         self.iy=0
         self.iset=0
@@ -185,81 +257,38 @@ class SimpleMD:
         self.write_statistics_last_time_reopened=0
         self.write_statistics_fp=None
 
-        self.temperature=1.0
-        self.maxneighbors=1000
-        self.tstep=0.005
-        self.friction=0.0
-        self.forcecutoff=2.5
-        self.listcutoff=3.0
-        self.nstep=1
-        self.nconfig=10
-        self.nstat=1
-        self.idum=0
-        self.wrapatoms=False
-        self.statfile=""
-        self.trajfile=""
-        self.outputfile=""
-        self.inputfile=""
+        self.temperature=temperature
+        self.maxneighbors=maxneighbors
+        self.tstep=tstep
+        self.friction=friction
+        self.forcecutoff=forcecutoff
+        self.listcutoff=listcutoff
+        self.nstep=nstep
+        self.nconfig=nconfig
+        self.nstat=nstat
+        self.idum=idum
+        self.wrapatoms=wrapatoms
+        self.statfile=statfile
+        self.trajfile=trajfile
+        self.outputfile=outputfile
+        self.inputfile=inputfile
+        self.positions=positions
+        self.cell=cell
 
         self.statfile_f=None
 
+        self.statistics=[]
+        self.trajectory=[]
 
-    def read_input(self,file):
-        with open(file,"r") as f:
-            for line in f:
-                line=re.sub("#.*$","",line)
-                line=re.sub(" *$","",line)
-                words=line.split()
-                if len(words)==0:
-                    continue
-                key=words[0]
-                if key=="temperature":
-                    self.temperature=float(words[1])
-                elif key=="tstep":
-                    self.tstep=float(words[1])
-                elif key=="friction":
-                    self.friction=float(words[1])
-                elif key=="forcecutoff":
-                    self.forcecutoff=float(words[1])
-                elif key=="listcutoff":
-                    self.listcutoff=float(words[1])
-                elif key=="nstep":
-                    self.nstep=int(words[1])
-                elif key=="nconfig":
-                    self.nconfig=int(words[1])
-                    self.trajfile=words[2]
-                elif key=="nstat":
-                    self.nstat=int(words[1])
-                    self.statfile=words[2]
-                elif key=="wrapatoms":
-                    if re.match("[Tt].*",words[1]):
-                        self.wrapatoms=True
-                elif key=="maxneighbours":
-                    self.maxneighbors=int(words[1])
-                elif key=="inputfile":
-                    self.inputfile=words[1]
-                elif key=="outputfile":
-                    self.outputfile=words[1]
-                elif key=="idum":
-                    self.idum=int(words[1])
-                else:
-                    raise Exception("Unknown keyword: "+key)
-        if len(self.inputfile)==0:
-            raise Exception("Specify input file")
-        if len(self.outputfile)==0:
-            raise Exception("Specify output file")
-        if len(self.trajfile)==0:
-            raise Exception("Specify traj file")
-        if len(self.statfile)==0:
-            raise Exception("Specify stat file")
+        if positions is not None and cell is None:
+           raise Exception("either pass both cell and positions or none of them")
+        if positions is None and cell is not None:
+           raise Exception("either pass both cell and positions or none of them")
 
-    def read_positions(self,file):
-        with open(file,"r") as f:
-            natoms=int(f.readline())
-            cell=[float(x) for x in f.readline().split()]
-            positions=np.loadtxt(f,usecols=(1,2,3))
-        assert(len(positions)==natoms)
-        return np.array(cell),np.array(positions)
+        if self.inputfile is None and positions is None:
+            raise Exception("Either specify input file or positions")
+        if self.inputfile is not None and positions is not None:
+            raise Exception("Either specify input file or positions")
 
     def randomize_velocities(self,temperature,masses,random):
        return np.sqrt(temperature/masses)[:,np.newaxis]*random.Gaussian(shape=(len(masses),3))
@@ -285,46 +314,56 @@ class SimpleMD:
         return velocities,engint
 
     def write_positions(self,cell,positions,wrapatoms=False):
-        mode="w"
-        if self.write_positions_first:
-            self.write_positions_first = False
+        if self.trajfile:
             mode="w"
+            if self.write_positions_first:
+                self.write_positions_first = False
+                mode="w"
+            else:
+                mode="a"
+     
+            with open(self.trajfile,mode) as f:
+                print("%d" % len(positions), file=f)
+                print("%f %f %f" % (cell[0], cell[1], cell[2]), file=f)
+                if wrapatoms:
+                    positions = self.pbc(cell,positions)
+                np.savetxt(f,positions,fmt="Ar %10.7f %10.7f %10.7f")
         else:
-            mode="a"
-
-        with open(self.trajfile,mode) as f:
-            print("%d" % len(positions), file=f)
-            print("%f %f %f" % (cell[0], cell[1], cell[2]), file=f)
-            if wrapatoms:
-                positions = self.pbc(cell,positions)
-            np.savetxt(f,positions,fmt="Ar %10.7f %10.7f %10.7f")
+            self.trajectory.append((cell,positions))
 
     def write_final_positions(self,cell,positions,wrapatoms=False):
-        with open(self.outputfile,"w") as f:
-            print("%d" % len(positions), file=f)
-            print("%f %f %f" % (cell[0], cell[1], cell[2]), file=f)
-            if wrapatoms:
-                positions = self.pbc(cell,positions)
-            np.savetxt(f,positions,fmt="Ar %10.7f %10.7f %10.7f")
+        if self.outputfile:
+            with open(self.outputfile,"w") as f:
+                print("%d" % len(positions), file=f)
+                print("%f %f %f" % (cell[0], cell[1], cell[2]), file=f)
+                if wrapatoms:
+                    positions = self.pbc(cell,positions)
+                np.savetxt(f,positions,fmt="Ar %10.7f %10.7f %10.7f")
+        else:
+            self.output=(cell,positions)
 
     def write_statistics(self,istep,tstep,natoms,engkin,engconf,engint):
-         if self.write_statistics_fp is None:
-             self.write_statistics_fp = open(self.statfile, "w")
-         if istep-self.write_statistics_last_time_reopened>100:
-             self.write_statistics_fp.close()
-             self.write_statistics_fp = open(self.statfile, "a")
-             self.write_statistics_last_time_reopened=istep
-         print("%d %f %f %f %f %f" %
-               (istep,istep*tstep,2.0*engkin/(3.0*natoms),engconf,engkin+engconf,engkin+engconf+engint),
-               file=self.write_statistics_fp)
+         if self.statfile:
+             if self.write_statistics_fp is None:
+                 self.write_statistics_fp = open(self.statfile, "w")
+             if istep-self.write_statistics_last_time_reopened>100:
+                 self.write_statistics_fp.close()
+                 self.write_statistics_fp = open(self.statfile, "a")
+                 self.write_statistics_last_time_reopened=istep
+             print("%d %f %f %f %f %f" %
+                   (istep,istep*tstep,2.0*engkin/(3.0*natoms),engconf,engkin+engconf,engkin+engconf+engint),
+                   file=self.write_statistics_fp)
+         else:
+              self.statistics.append((istep,istep*tstep,2.0*engkin/(3.0*natoms),engconf,engkin+engconf,engkin+engconf+engint))
 
-    def run(self,parameters):
-        self.read_input(parameters)
-        cell,positions=self.read_positions(self.inputfile)
+    def run(self):
+        if self.positions is None:
+            self.cell,self.positions=read_positions(self.inputfile)
+
         random=Random(self.idum)
 
         # masses are hardcoded to 1
-        masses=np.ones(len(positions))
+        masses=np.ones(len(self.positions))
 
         # energy integral initialized to 0
         engint=0.0
@@ -333,21 +372,21 @@ class SimpleMD:
         velocities=self.randomize_velocities(self.temperature,masses,random)
 
         # allocate space for neighbor lists
-        nlist=np.zeros(self.maxneighbors*len(positions), dtype=int)
-        point=np.zeros(len(positions)+1, dtype=int)
+        nlist=np.zeros(self.maxneighbors*len(self.positions), dtype=int)
+        point=np.zeros(len(self.positions)+1, dtype=int)
         # neighbour list are computed
-        _compute_list(cell, positions, self.listcutoff, nlist, point)
+        _compute_list(self.cell, self.positions, self.listcutoff, nlist, point)
 
-        print("Neighbour list recomputed at step ",0)
-        print("List size: ",len(nlist))
+        #print("Neighbour list recomputed at step ",0)
+        #print("List size: ",len(nlist))
 
         # reference positions are saved
-        positions0=+positions
+        positions0=+self.positions
 
-        forces=np.zeros(shape=positions.shape)
+        forces=np.zeros(shape=self.positions.shape)
 
         # forces are computed before starting md
-        engconf= _compute_forces(cell, positions, self.forcecutoff, nlist, point, forces)
+        engconf= _compute_forces(self.cell, self.positions, self.forcecutoff, nlist, point, forces)
 
         # here is the main md loop
         # Langevin thermostat is applied before and after a velocity-Verlet integrator
@@ -367,16 +406,16 @@ class SimpleMD:
                         masses,0.5*self.tstep,self.friction,self.temperature,velocities,engint,random)
 
             velocities+=forces*0.5*self.tstep/masses[:,np.newaxis]
-            positions+=velocities*self.tstep
+            self.positions+=velocities*self.tstep
 
-            check_list=self.check_list(positions,positions0,self.listcutoff,self.forcecutoff)
+            check_list=self.check_list(self.positions,positions0,self.listcutoff,self.forcecutoff)
             if check_list:
-                _compute_list(cell, positions, self.listcutoff, nlist, point)
-                positions0=+positions
-                print("Neighbour list recomputed at step ",istep)
-                print("List size: ",len(nlist))
+                _compute_list(self.cell, self.positions, self.listcutoff, nlist, point)
+                positions0=+self.positions
+                #print("Neighbour list recomputed at step ",istep)
+                #print("List size: ",len(nlist))
 
-            engconf = _compute_forces(cell, positions, self.forcecutoff, nlist, point, forces)
+            engconf = _compute_forces(self.cell, self.positions, self.forcecutoff, nlist, point, forces)
 
             velocities+=forces*0.5*self.tstep/masses[:,np.newaxis]
 
@@ -385,12 +424,12 @@ class SimpleMD:
                         masses,0.5*self.tstep,self.friction,self.temperature,velocities,engint,random)
 
             if (istep+1)%self.nconfig==0:
-                self.write_positions(cell,positions,self.wrapatoms)
+                self.write_positions(self.cell,self.positions,self.wrapatoms)
             if (istep+1)%self.nstat==0:
                 engkin = self.compute_engkin(masses,velocities)
-                self.write_statistics(istep+1,self.tstep,len(positions),engkin,engconf,engint)
+                self.write_statistics(istep+1,self.tstep,len(self.positions),engkin,engconf,engint)
 
-        self.write_final_positions(cell,positions,self.wrapatoms)
+        self.write_final_positions(self.cell,self.positions,self.wrapatoms)
 
         if self.write_statistics_fp is not None:
             self.write_statistics_fp.close()
@@ -401,6 +440,7 @@ if __name__ == "__main__":
     with tempfile.NamedTemporaryFile("w+t") as tmp:
         tmp.write(input)
         tmp.flush()
-        simplemd=SimpleMD()
-        simplemd.run(tmp.name)
+        keys=read_input(tmp.name)
+        simplemd=SimpleMD(**keys)
+        simplemd.run()
 
