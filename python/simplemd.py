@@ -435,12 +435,24 @@ class SimpleMD:
             self.write_statistics_fp.close()
 
 if __name__ == "__main__":
-    # read from stdin and store on a temporary file
+    # read from stdin, store on a temporary file, and read in a dictionary
     input = sys.stdin.read()
     with tempfile.NamedTemporaryFile("w+t") as tmp:
         tmp.write(input)
         tmp.flush()
         keys=read_input(tmp.name)
-        simplemd=SimpleMD(**keys)
-        simplemd.run()
+
+    # when running from the command line, used should provide all file names
+    if "inputfile" not in keys:
+        raise Exception("Specify input file")
+    if "outputfile" not in keys:
+        raise Exception("Specify output file")
+    if "trajfile" not in keys:
+        raise Exception("Specify traj file")
+    if "statfile" not in keys:
+        raise Exception("Specify stat file")
+
+    # run the actual simulation
+    simplemd=SimpleMD(**keys)
+    simplemd.run()
 
