@@ -236,6 +236,16 @@ def read_positions(file):
 def pbc(self,cell,vector):
     return vector-np.floor(vector/cell+0.5)*cell
 
+def write_trajectory(file,trajectory,*,wrapatoms=False):
+    with open(file,"w") as f:
+        for cell,positions in trajectory:
+            print("%d" % len(positions), file=f)
+            print("%f %f %f" % (cell[0], cell[1], cell[2]), file=f)
+            if wrapatoms:
+                positions = pbc(cell,positions)
+            np.savetxt(f,positions,fmt="Ar %10.7f %10.7f %10.7f")
+
+
 class SimpleMD:
     def __init__(self,*,
                 temperature=1.0,
