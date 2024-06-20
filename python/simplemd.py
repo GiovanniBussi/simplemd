@@ -232,6 +232,9 @@ def read_positions(file):
     assert(len(positions)==natoms)
     return np.array(cell),np.array(positions)
 
+# note: this can act on a vector of vectors
+def pbc(self,cell,vector):
+    return vector-np.floor(vector/cell+0.5)*cell
 
 class SimpleMD:
     def __init__(self,*,
@@ -299,10 +302,6 @@ class SimpleMD:
     def randomize_velocities(self,temperature,masses,random):
        return np.sqrt(temperature/masses)[:,np.newaxis]*random.Gaussian(shape=(len(masses),3))
 
-    # note: this can act on a vector of vectors
-    def pbc(self,cell,vector):
-        return vector-np.floor(vector/cell+0.5)*cell
-
     def check_list(self,positions,positions0,listcutoff,forcecutoff):
        delta2=(0.5*(listcutoff-forcecutoff))*(0.5*(listcutoff-forcecutoff))
        disp2=np.sum((positions-positions0)**2,axis=1)
@@ -332,7 +331,7 @@ class SimpleMD:
                 print("%d" % len(positions), file=f)
                 print("%f %f %f" % (cell[0], cell[1], cell[2]), file=f)
                 if wrapatoms:
-                    positions = self.pbc(cell,positions)
+                    positions = pbc(cell,positions)
                 np.savetxt(f,positions,fmt="Ar %10.7f %10.7f %10.7f")
         else:
             self.trajectory.append((cell,positions))
@@ -343,7 +342,7 @@ class SimpleMD:
                 print("%d" % len(positions), file=f)
                 print("%f %f %f" % (cell[0], cell[1], cell[2]), file=f)
                 if wrapatoms:
-                    positions = self.pbc(cell,positions)
+                    positions = pbc(cell,positions)
                 np.savetxt(f,positions,fmt="Ar %10.7f %10.7f %10.7f")
         else:
             self.output=(cell,positions)
