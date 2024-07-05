@@ -291,7 +291,7 @@ class SimpleMD:
         self.trajfile=trajfile
         self.outputfile=outputfile
         self.inputfile=inputfile
-        self.positions=positions
+        self.positions=+positions
         self.cell=cell
 
         self.statfile_f=None
