@@ -233,7 +233,7 @@ def read_positions(file):
     return np.array(cell),np.array(positions)
 
 # note: this can act on a vector of vectors
-def pbc(self,cell,vector):
+def pbc(cell,vector):
     return vector-np.floor(vector/cell+0.5)*cell
 
 def write_trajectory(file,trajectory,*,wrapatoms=False):
