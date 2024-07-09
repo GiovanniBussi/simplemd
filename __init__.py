@@ -344,6 +344,8 @@ class SimpleMD:
                     positions = pbc(cell,positions)
                 np.savetxt(f,positions,fmt="Ar %10.7f %10.7f %10.7f")
         else:
+            if wrapatoms:
+               positions = pbc(cell,positions)
             self.trajectory.append((cell,+positions))
 
     def write_final_positions(self,cell,positions,wrapatoms=False):
@@ -355,6 +357,8 @@ class SimpleMD:
                     positions = pbc(cell,positions)
                 np.savetxt(f,positions,fmt="Ar %10.7f %10.7f %10.7f")
         else:
+            if wrapatoms:
+               positions = pbc(cell,positions)
             self.output=(cell,positions)
 
     def write_statistics(self,istep,tstep,natoms,engkin,engconf,engint):
