@@ -293,6 +293,8 @@ class SimpleMD:
         self.inputfile=inputfile
         if positions is not None:
             self.positions=+positions
+        else:
+            self.positions=None
         self.cell=cell
 
         self.statfile_f=None
